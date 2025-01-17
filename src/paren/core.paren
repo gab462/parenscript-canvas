@@ -1,0 +1,27 @@
+(defmacro ps-include (name)
+  `(ps:lisp (ps:ps-compile-file ,(concatenate 'string "src/paren/" name))))
+
+(ps-include "runtime.paren")
+(ps-include "vec2.paren")
+
+(defparameter *state* (make-vec2 50 50))
+(defparameter *speed* 0.5)
+
+(defun update-state (state dt)
+  (when (key-pressed "p")
+    (ps:chain console (log state)))
+  (when (key-held "d")
+    (incf (ps:@ state x) (* *speed* dt)))
+  (when (key-held "a")
+    (decf (ps:@ state x) (* *speed* dt)))
+  (when (key-held "w")
+    (decf (ps:@ state y) (* *speed* dt)))
+  (when (key-held "s")
+    (incf (ps:@ state y) (* *speed* dt))))
+
+(defun draw-state (state)
+  (with-slots (x y) state
+    (draw-line (- x 50) (- y 50) (+ x 50) (+ y 50))
+    (draw-line (+ x 50) (- y 50) (- x 50) (+ y 50))))
+
+(start-loop #'update-state #'draw-state *state*)

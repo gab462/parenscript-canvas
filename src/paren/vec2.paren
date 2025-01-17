@@ -1,0 +1,18 @@
+(defun make-vec2 (x y)
+  (ps:create :x x
+             :y y))
+
+(defun vec2-add (a b)
+  (with-slots (x y) a
+    (ps:create :x (+ x (ps:@ b x))
+               :y (+ y (ps:@ b y)))))
+
+(defun vec2-sub (a b)
+  (with-slots (x y) a
+    (ps:create :x (- x (ps:@ b x))
+               :y (- y (ps:@ b y)))))
+
+(defun vec2-mul (a b)
+  (with-slots (x y) a
+    (ps:create :x (* x (ps:@ b x))
+               :y (* y (ps:@ b y)))))

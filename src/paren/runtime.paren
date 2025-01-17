@@ -1,0 +1,71 @@
+(defvar *keys-pressed*
+  (ps:new (-set)))
+
+(defvar *keys-held*
+  (ps:new (-set)))
+
+(defvar *canvas*
+  (ps:chain document (get-element-by-id "app")))
+
+(defvar *ctx*
+  (ps:chain *canvas* (get-context "2d")))
+
+(defvar *previous-timestamp* 0)
+
+(defun key-pressed (c)
+  (ps:chain *keys-pressed* (has c)))
+
+(defun key-held (c)
+  (ps:chain *keys-held* (has c)))
+
+(defun clear-bg ()
+  (ps:chain *ctx* (fill-rect 0 0 (ps:@ *canvas* width) (ps:@ *canvas* height))))
+
+(defun draw-line (x1 y1 x2 y2)
+  (ps:chain *ctx* (move-to x1 y1))
+  (ps:chain *ctx* (line-to x2 y2)))
+
+(defun add-to-set (s v)
+  (ps:chain s (add v)))
+
+(defun delete-from-set (s v)
+  (ps:chain s (delete v)))
+
+(defun set-callback (name func)
+  (ps:chain window (add-event-listener name func)))
+
+(set-callback
+  "keydown"
+  (lambda (e)
+    (add-to-set *keys-pressed*
+                (ps:@ e key))
+    (add-to-set *keys-held*
+                (ps:@ e key))))
+
+(set-callback
+  "keyup"
+  (lambda (e)
+    (delete-from-set
+      *keys-held*
+      (ps:@ e key))))
+
+(setf (ps:@ *ctx* stroke-style) "white"
+      (ps:@ *ctx* fill-style) "black")
+
+(defmacro with-drawing (&rest body)
+  `(progn
+     (clear-bg)
+     (ps:chain *ctx* (begin-path))
+     ,@body
+     (ps:chain *ctx* (stroke))
+     (ps:chain *keys-pressed* (clear))))
+
+(defmacro start-loop (update-fn draw-fn state)
+  `(labels ((next (timestamp)
+              (let ((dt (- timestamp *previous-timestamp*)))
+                (funcall ,update-fn ,state dt)
+                (with-drawing
+                  (funcall ,draw-fn ,state))
+                (setf *previous-timestamp* timestamp)
+                (ps:chain window (request-animation-frame next)))))
+     (ps:chain window (request-animation-frame next))))
